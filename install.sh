@@ -382,6 +382,17 @@ ensure_nemoclaw_shim() {
   ln -sfn "$npm_bin/nemoclaw" "$shim_path"
   refresh_path
   info "Created user-local shim at $shim_path"
+
+  # Persist ~/.local/bin to the user's shell profile if not already present.
+  local profile
+  profile="$(detect_shell_profile)"
+  # shellcheck disable=SC2016
+  local path_line='export PATH="$HOME/.local/bin:$PATH"'
+  if [[ -f "$profile" ]] && ! grep -q '\.local/bin' "$profile"; then
+    printf '\n# Added by NemoClaw installer\n%s\n' "$path_line" >>"$profile"
+    info "Added ~/.local/bin to PATH in $profile"
+  fi
+
   return 0
 }
 

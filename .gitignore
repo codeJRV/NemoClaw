@@ -44,3 +44,8 @@ secrets.json
 secrets.yaml
 service-account*.json
 token.json
+
+# IDEs
+.vscode/
+.idea/
+.cursor/

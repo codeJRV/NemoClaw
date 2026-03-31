@@ -310,6 +310,32 @@ remove_nemoclaw_cli() {
   elif [ -f "${NEMOCLAW_SHIM_DIR}/nemoclaw" ]; then
     warn "Leaving ${NEMOCLAW_SHIM_DIR}/nemoclaw in place because it is not an installer-managed shim."
   fi
+
+  # Remove the PATH entry added by the installer from all common shell profiles.
+  local profiles=(
+    "$HOME/.bashrc"
+    "$HOME/.zshrc"
+    "$HOME/.profile"
+    "$HOME/.config/fish/config.fish"
+    "$HOME/.tcshrc"
+    "$HOME/.cshrc"
+  )
+  for profile in "${profiles[@]}"; do
+    [[ -f "$profile" ]] || continue
+    if grep -q '^# Added by NemoClaw installer$' "$profile"; then
+      local backup="${profile}.nemoclaw.bak"
+      cp "$profile" "$backup"
+      # Delete the "# Added by NemoClaw installer" comment line and the
+      # immediately following export PATH line containing .local/bin.
+      awk '
+        /^# Added by NemoClaw installer$/ { skip=1; next }
+        skip && /export PATH=.*\.local\/bin/ { skip=0; next }
+        { skip=0; print }
+      ' "$backup" >"$profile"
+      rm -f "$backup"
+      info "Removed ~/.local/bin PATH entry from $profile"
+    fi
+  done
 }
 
 remove_docker_resources() {
